@@ -28,7 +28,7 @@ export class BCC_Middleware {
     }
 
     middleware(): Middleware {
-        const bundledRE = this.BundledRE;
+        const bundledRE = this.BundleRegEx;
         const compiledRE = this.CompileRegEx;
         const cacheRE = this.CacheRegEx;
         const bcc = this.bcc;
