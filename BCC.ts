@@ -163,6 +163,7 @@ export class BCC {
         for (const resource in emitMap) {
             const dir = paths.compiled;
             const code = this.mapExternalSources(emitMap[resource]);
+            await fs.ensureDir(dir);
             await Deno.writeTextFile(`${dir}.js`, code);
         }
     }
@@ -193,6 +194,7 @@ export class BCC {
         assert(diagnostics == null, `Compile Error: ${JSON.stringify(diagnostics)}`);
         const dir = paths.bundle;
         const code = this.mapExternalSources(emit);
+        await fs.ensureDir(dir);
         await Deno.writeTextFile(`${dir}.js`, code);
     }
 
