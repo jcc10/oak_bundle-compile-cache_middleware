@@ -193,7 +193,6 @@ export class BCC {
       const dir = paths.compiled;
       const code = this.mapExternalSources(emitMap[resource]);
       await fs.ensureDir(this.compiledFolder);
-      console.log({dir, resource});
       await Deno.writeTextFile(`${dir}.js`, code);
     }
   }
