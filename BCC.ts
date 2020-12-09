@@ -48,7 +48,7 @@ export class BCC {
      * Clear previously bundled code.
      */
   public async clearBundleCache() {
-    if(!this.bundleFolder){
+    if (!this.bundleFolder) {
       return;
     }
     await fs.emptyDir(`./${this.bundleFolder}/`);
@@ -116,7 +116,9 @@ export class BCC {
       source: `./${this.tsSource}/${script}`,
       sourceURI: `file://${Deno.cwd()}/${this.tsSource}/`,
       bundle: this.bundleFolder ? `./${this.bundleFolder}/${script}` : false,
-      compiled: this.compiledFolder ? `./${this.compiledFolder}/${script}` : false,
+      compiled: this.compiledFolder
+        ? `./${this.compiledFolder}/${script}`
+        : false,
     };
   }
 
@@ -145,7 +147,7 @@ export class BCC {
     functionName: string,
   ): Promise<string> {
     let data;
-    if(cachePath){
+    if (cachePath) {
       data = `throw new Error("${functionName} somehow failed.")`;
       try {
         data = await Deno.readTextFile(cachePath);
@@ -155,11 +157,12 @@ export class BCC {
           data = await Deno.readTextFile(cachePath);
         } catch {
           data =
-          `throw new Error("${functionName} failed to find file '${script}'.")`;
+            `throw new Error("${functionName} failed to find file '${script}'.")`;
         }
       }
     } else {
-      data = `throw new Error("${functionName} is disabled in the BCC configuration.")`
+      data =
+        `throw new Error("${functionName} is disabled in the BCC configuration.")`;
     }
     return data;
   }
@@ -170,7 +173,7 @@ export class BCC {
      */
   public async compile(script: string) {
     const paths = this.generatedPaths(script);
-    if(!paths.compiled){
+    if (!paths.compiled) {
       return;
     }
     const [diagnostics, emitMap] = await Deno.compile(
@@ -277,7 +280,7 @@ export class BCC {
      */
   public async scriptCache(script: string, handle: string): Promise<string> {
     let data;
-    if(this.cacheFolder){
+    if (this.cacheFolder) {
       const hash = createHash("md5");
       hash.update(script);
       const uri = `./${this.cacheFolder}/${handle}/${hash.toString()}`;
@@ -290,11 +293,11 @@ export class BCC {
           data = await Deno.readTextFile(uri);
         } catch {
           data =
-          `throw new Error("external cache missing file '${script}' for source '${handle}'.")`;
+            `throw new Error("external cache missing file '${script}' for source '${handle}'.")`;
         }
       }
     } else {
-      data = `throw new Error("External cache disabled.")`
+      data = `throw new Error("External cache disabled.")`;
     }
     return data;
   }

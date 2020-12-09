@@ -14,21 +14,21 @@ export class BCC_Middleware {
     private CompileRegEx: RegExp | null = /\/compiled\/(.+)/;
     private CacheRegEx: RegExp | null = /\/cache\/(.+?)\/(.+)/;
     public readonly bcc: BCC;
-    constructor(settings: BCC_Middleware_Settings){
+    constructor(settings: BCC_Middleware_Settings) {
         this.bcc = new BCC(settings.BCC_Settings);
-        if(settings.BundleRegEx != undefined){
+        if (settings.BundleRegEx != undefined) {
             this.BundleRegEx = settings.BundleRegEx
         }
-        if (!settings.BCC_Settings.bundleFolder){
+        if (!settings.BCC_Settings.bundleFolder) {
             this.BundleRegEx = null;
         }
-        if(settings.CompileRegEx != undefined){
+        if (settings.CompileRegEx != undefined) {
             this.CompileRegEx = settings.CompileRegEx
         }
         if (!settings.BCC_Settings.compiledFolder) {
             this.CompileRegEx = null;
         }
-        if(settings.CacheRegEx != undefined){
+        if (settings.CacheRegEx != undefined) {
             this.CacheRegEx = settings.CacheRegEx
         }
         if (!settings.BCC_Settings.cacheFolder) {
