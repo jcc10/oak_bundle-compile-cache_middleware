@@ -19,11 +19,20 @@ export class BCC_Middleware {
         if(settings.BundleRegEx != undefined){
             this.BundleRegEx = settings.BundleRegEx
         }
+        if (!settings.BCC_Settings.bundleFolder){
+            this.BundleRegEx = null;
+        }
         if(settings.CompileRegEx != undefined){
             this.CompileRegEx = settings.CompileRegEx
         }
+        if (!settings.BCC_Settings.compiledFolder) {
+            this.CompileRegEx = null;
+        }
         if(settings.CacheRegEx != undefined){
             this.CacheRegEx = settings.CacheRegEx
+        }
+        if (!settings.BCC_Settings.cacheFolder) {
+            this.CacheRegEx = null;
         }
     }
 
