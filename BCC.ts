@@ -155,7 +155,7 @@ export class BCC {
         await generator(script.replace(/.js$/, ""));
         try {
           data = await Deno.readTextFile(cachePath);
-        } catch {
+        } catch(e) {
           data =
             `throw new Error("${functionName} failed to find file '${script}'.")`;
         }
@@ -173,7 +173,7 @@ export class BCC {
      */
   public async compile(script: string) {
     const paths = this.generatedPaths(script);
-    if (!paths.compiled) {
+    if (!paths.compiled || ! this.compiledFolder) {
       return;
     }
     const [diagnostics, emitMap] = await Deno.compile(
@@ -192,7 +192,8 @@ export class BCC {
     for (const resource in emitMap) {
       const dir = paths.compiled;
       const code = this.mapExternalSources(emitMap[resource]);
-      await fs.ensureDir(dir);
+      await fs.ensureDir(this.compiledFolder);
+      console.log({dir, resource});
       await Deno.writeTextFile(`${dir}.js`, code);
     }
   }
@@ -219,7 +220,7 @@ export class BCC {
      */
   public async bundle(script: string) {
     const paths = this.generatedPaths(script);
-    if (!paths.bundle) {
+    if (!paths.bundle || !this.bundleFolder) {
       return;
     }
     const [diagnostics, emit] = await Deno.bundle(
@@ -236,7 +237,7 @@ export class BCC {
     );
     const dir = paths.bundle;
     const code = this.mapExternalSources(emit);
-    await fs.ensureDir(dir);
+    await fs.ensureDir(this.bundleFolder);
     await Deno.writeTextFile(`${dir}.js`, code);
   }
 
@@ -257,12 +258,15 @@ export class BCC {
   }
 
   private async updateCache(script: string, src: string, uri: string) {
+    if(!this.cacheFolder){
+      return;
+    }
     const resp = await fetch(`${this.cacheMap.get(src)}${script}`);
     const code = this.mapExternalSources(await resp.text());
-    await fs.ensureDir(`./cache/${src}/`);
+    await fs.ensureDir(`${this.cacheFolder}/${src}/`);
     const hash = createHash("md5");
     hash.update(script);
-    await Deno.writeTextFile(`./cache/${src}/${hash.toString()}`, code);
+    await Deno.writeTextFile(`${this.cacheFolder}/${src}/${hash.toString()}`, code);
   }
 
   /**
