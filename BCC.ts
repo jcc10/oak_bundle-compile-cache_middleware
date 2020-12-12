@@ -6,6 +6,7 @@ interface paths {
   source: string;
   sourceURI: string;
   bundle: string | false;
+  transpile: string | false;
   compiled: string | false;
 }
 
@@ -13,6 +14,7 @@ export interface BCC_Settings {
   tsSource: string;
   bundleFolder?: string;
   compiledFolder?: string;
+  transpileFolder?: string;
   cacheFolder?: string;
   cacheRoot?: string;
   mapSources?: boolean;
@@ -22,6 +24,7 @@ export class BCC {
   private tsSource: string;
   private bundleFolder?: string;
   private compiledFolder?: string;
+  private transpileFolder?: string;
   private cacheFolder?: string;
   private cacheRoot?: string;
   private cacheMap: Map<string, string> = new Map<string, string>();
@@ -39,6 +42,7 @@ export class BCC {
     this.tsSource = settings.tsSource;
     this.bundleFolder = settings.bundleFolder;
     this.compiledFolder = settings.compiledFolder;
+    this.transpileFolder = settings.transpileFolder;
     this.cacheFolder = settings.cacheFolder;
     this.cacheRoot = settings.cacheRoot;
     this.mapSources = settings.mapSources || false;
@@ -63,6 +67,15 @@ export class BCC {
     await fs.emptyDir(`./${this.compiledFolder}/`);
   }
   /**
+     * Clear previously transpile code.
+     */
+  public async clearTranspileCache() {
+    if (!this.transpileFolder) {
+      return;
+    }
+    await fs.emptyDir(`./${this.transpileFolder}/`);
+  }
+  /**
      * Clear previously fetched external code.
      */
   public async clearExternalCache() {
@@ -78,6 +91,7 @@ export class BCC {
     const clearing = [
       this.clearBundleCache(),
       this.clearCompileCache(),
+      this.clearTranspileCache(),
       this.clearExternalCache(),
     ];
     await Promise.all(clearing);
@@ -116,6 +130,7 @@ export class BCC {
       source: `./${this.tsSource}/${script}`,
       sourceURI: `file://${Deno.cwd()}/${this.tsSource}/`,
       bundle: this.bundleFolder ? `./${this.bundleFolder}/${script}` : false,
+      transpile: this.transpileFolder ? `./${this.transpileFolder}/${script}` : false,
       compiled: this.compiledFolder
         ? `./${this.compiledFolder}/${script}`
         : false,
@@ -253,6 +268,45 @@ export class BCC {
       this.generatedPaths(script).bundle,
       ref,
       "cachedBundle",
+    );
+  }
+
+  /**
+     * Transpile a script and caches it.
+     * @param script script name
+     */
+  public async transpile(script: string) {
+    const paths = this.generatedPaths(script);
+    if (!paths.transpile || !this.transpileFolder) {
+      return;
+    }
+    const emit = await Deno.transpileOnly(
+      {"main.ts": paths.source},
+      {
+        sourceMap: false,
+        inlineSourceMap: true,
+      },
+    );
+    const dir = paths.transpile;
+    const rawCode = <string><unknown>emit.source;
+    const code = this.mapExternalSources(rawCode);
+    await fs.ensureDir(this.transpileFolder);
+    await Deno.writeTextFile(`${dir}`, code);
+  }
+
+  /**
+     * Tries to retrieve a cached version of the script, failing that it will transpile.
+     * @param script script name
+     */
+  public async cachedTranspile(script: string) {
+    const ref = async (script: string) => {
+      return await this.transpile(script);
+    };
+    return await this.cacheOrGen(
+      script,
+      this.generatedPaths(script).transpile,
+      ref,
+      "cachedTranspile",
     );
   }
 
