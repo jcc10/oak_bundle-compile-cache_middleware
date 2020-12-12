@@ -5,6 +5,7 @@ export interface BCC_Middleware_Settings {
     BCC_Settings: BCC_Settings,
     BundleRegEx?: RegExp | null,
     CompileRegEx?: RegExp | null,
+    TranspileRegEx?: RegExp | null,
     CacheRegEx?: RegExp | null,
 }
 
@@ -12,6 +13,7 @@ export interface BCC_Middleware_Settings {
 export class BCC_Middleware {
     private BundleRegEx: RegExp | null = /\/bundled\/(.+)/;
     private CompileRegEx: RegExp | null = /\/compiled\/(.+)/;
+    private TranspileRegEx: RegExp | null = /\/transpile\/(.+)/;
     private CacheRegEx: RegExp | null = /\/cache\/(.+?)\/(.+)/;
     public readonly bcc: BCC;
     constructor(settings: BCC_Middleware_Settings) {
@@ -34,11 +36,18 @@ export class BCC_Middleware {
         if (!settings.BCC_Settings.cacheFolder) {
             this.CacheRegEx = null;
         }
+        if (settings.TranspileRegEx != undefined) {
+            this.TranspileRegEx = settings.TranspileRegEx
+        }
+        if (!settings.BCC_Settings.transpileFolder) {
+            this.TranspileRegEx = null;
+        }
     }
 
     middleware(): Middleware {
         const bundledRE = this.BundleRegEx;
         const compiledRE = this.CompileRegEx;
+        const transpileRE = this.TranspileRegEx;
         const cacheRE = this.CacheRegEx;
         const bcc = this.bcc;
         return async (context: Context, next: () => Promise<void>) => {
@@ -49,6 +58,10 @@ export class BCC_Middleware {
             } else if (compiledRE?.test(context.request.url.pathname)) {
                 const [_, script] = <RegExpExecArray>compiledRE.exec(context.request.url.pathname);
                 context.response.body = await bcc.cachedCompile(script);
+                context.response.type = "text/javascript";
+            } else if (transpileRE?.test(context.request.url.pathname)) {
+                const [_, script] = <RegExpExecArray>transpileRE.exec(context.request.url.pathname);
+                context.response.body = await bcc.cachedTranspile(script);
                 context.response.type = "text/javascript";
             } else if (cacheRE?.test(context.request.url.pathname)) {
                 const [_, src, script] = <RegExpExecArray>cacheRE.exec(context.request.url.pathname);
