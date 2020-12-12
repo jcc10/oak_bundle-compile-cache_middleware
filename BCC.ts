@@ -205,10 +205,12 @@ export class BCC {
     );
     const cwd = paths.sourceURI;
     for (const resource in emitMap) {
+      if(resource.indexOf(cwd) == -1)
+        continue;
       const dir = paths.compiled;
       const code = this.mapExternalSources(emitMap[resource]);
       await fs.ensureDir(this.compiledFolder);
-      await Deno.writeTextFile(`${resource.replace(cwd, this.compiledFolder)}`, code);
+      await Deno.writeTextFile(`${resource.replace(cwd, `./${this.compiledFolder}/`).replace(/.js$/, "")}`, code);
     }
   }
 
